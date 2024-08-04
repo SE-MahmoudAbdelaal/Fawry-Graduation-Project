@@ -9,10 +9,8 @@ import com.e_commerce.order_api.feginClient.UserClient;
 import com.e_commerce.order_api.header.HeaderGenerator;
 import com.e_commerce.order_api.model.CouponRequest;
 import com.e_commerce.order_api.model.CouponResponse;
-import com.e_commerce.order_api.service.BankService;
-import com.e_commerce.order_api.service.CartService;
-import com.e_commerce.order_api.service.CouponService;
-import com.e_commerce.order_api.service.OrderService;
+import com.e_commerce.order_api.model.OrderNotification;
+import com.e_commerce.order_api.service.*;
 import com.e_commerce.order_api.utilitie.OrderUtilities;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.annotation.RequiredTypes;
@@ -39,31 +37,47 @@ public class OrderResource {
     private CartService cartService;
     @Autowired
     private UserClient userClient;
+    /////test order notification
+    @Autowired
+    NotificationService notificationService;
+//    @PostMapping
+//    public OrderNotification placeOrder(@RequestBody Order order){
+//        return notificationService.sendOrderNotification(order);
+//    }
 
-    @PostMapping(value = "{userId}", params = {"cardNumber", "cardPassword"})
+    @PostMapping(value = "{userId}", params = {"cardNumber", "cvv" ,"coupon"})
     public ResponseEntity<Order> saveOrder(@PathVariable("userId") Long userId,
                                            @RequestHeader(value = "Cookie") String cartId,
-                                           @RequestParam(required = false) String couponCode,
+                                           @RequestParam(value = "coupon",required = false ) String couponCode ,
                                            @RequestParam("cardNumber") String cardNumber,
                                            @RequestParam("cvv") String cvv,
                                            HttpServletRequest request) {
         List<Item> cart = cartService.getAllItemsFromCart(cartId);
-        User user = userClient.getUserById(userId);
-        if (cart != null && user != null && cvv != null && cardNumber != null) {
-            Order order = this.createOrder(cart, user, cardNumber, cvv);
-            CouponResponse coupon = couponService.couponIsValid(couponCode);
+//        User user = userClient.getUserById(userId);
+//        if (cart != null && user != null && cvv != null && cardNumber != null) {
+          if (cart != null && cvv != null && cardNumber != null) {
+
+//        Order order = this.createOrder(cart, user, cardNumber, cvv);
+              Order order = this.createOrder(cart, cardNumber, cvv);
+              //////////////////////tset
+              order.setCustomerId(userId);
+              order.setTotal_amount(OrderUtilities.countTotalPrice(cart));
+              CouponResponse coupon = couponService.couponIsValid(couponCode);
             if (coupon != null) {
-                order.setTotal_amount(OrderUtilities.countTotalPriceWithCoupon(cart, coupon.getValue_type(), coupon.getValue()));
+                order.setTotal_amount_after_discount(OrderUtilities.countTotalPriceWithCoupon(cart, coupon.getValue_type(), coupon.getValue()));
             }
             try {
                 Order savedOrder = orderService.saveOrder(order);
                 if (savedOrder != null) {
+                    System.out.println(couponCode);
                     CouponRequest consumeOrderRequest = new CouponRequest();
                     consumeOrderRequest.setCode(couponCode);
                     consumeOrderRequest.setOrder_id(order.getId());
                     consumeOrderRequest.setCustomer_id(userId);
                     couponService.couponConsumption(consumeOrderRequest);
                     cartService.deleteCart(cartId);
+                    notificationService.sendOrderNotification(order);
+
                     return new ResponseEntity<Order>(savedOrder, headerGenerator.getHeadersForSuccessPostMethod(request, order.getId()),
                             HttpStatus.CREATED);
                 } else {
@@ -79,10 +93,11 @@ public class OrderResource {
         return new ResponseEntity<Order>(headerGenerator.getHeadersForError(), HttpStatus.NOT_FOUND);
     }
 
-    private Order createOrder(List<Item> cart, User user, String cardNumber, String cvv) {
+//    private Order createOrder(List<Item> cart, User user, String cardNumber, String cvv) {
+private Order createOrder(List<Item> cart, String cardNumber, String cvv) {
         Order order = new Order();
         order.setItems(cart);
-        order.setUser(user);
+//        order.setUser(user);
         order.setCard_number(cardNumber);
         order.setCvv(cvv);
         order.setCreatedAt(LocalDateTime.now());
@@ -101,7 +116,7 @@ public class OrderResource {
         return List.of();
     }
 
-    @GetMapping("/search{customerId}")
+    @GetMapping("/search/{customerId}")
     public ResponseEntity<List<Order>> findOrderByCustomerName(@PathVariable Long customerId) {
         return ResponseEntity.ok(orderService.findOrderByCustomerId(customerId));
     }

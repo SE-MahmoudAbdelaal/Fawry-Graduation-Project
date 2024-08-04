@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TransactionRequest {
+public class WithdrawRequest {
     private String cardNumber;
     private String cvv;
     private double amount;

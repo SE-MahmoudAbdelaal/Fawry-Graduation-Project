@@ -15,8 +15,12 @@ public class OrderUtilities {
     }
     public static double countTotalPriceWithCoupon(List<Item> cart , String value_type , double value){
       double total =  countTotalPrice( cart );
-      if(value_type.equals("FIXED")){
-          total = total-value;
+      if(value_type.equals("fixed")){
+          if(total>value){
+              total = total-value;
+          }else{
+              total = 0;
+          }
       }else{
          total =total - (total * value)/100;
       }

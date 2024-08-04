@@ -26,8 +26,9 @@ public class Order {
     @Column (name = "total_amount")
     @NotNull
     private double total_amount;
+    private double  total_amount_after_discount;
     @Column (name = "transaction_id")
-    private String transactionId;
+    private Long transactionId;
     @Column (name = "customer_id")
     @NotNull
     private Long customerId;
@@ -45,6 +46,5 @@ public class Order {
     @ManyToOne (cascade = CascadeType.ALL)
     @JoinColumn (name = "user_id")
     private User user;
-
 
 }

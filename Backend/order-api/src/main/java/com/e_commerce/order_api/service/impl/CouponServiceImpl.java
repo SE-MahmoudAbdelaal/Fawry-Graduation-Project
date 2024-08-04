@@ -5,6 +5,7 @@ import com.e_commerce.order_api.model.CouponRequest;
 import com.e_commerce.order_api.model.CouponResponse;
 import com.e_commerce.order_api.service.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,18 +15,16 @@ public class CouponServiceImpl implements CouponService {
     @Override
     public CouponResponse couponIsValid(String couponCode) {
         if(couponCode != null){
-            CouponResponse coupon =  couponClient.getCouponByCode(couponCode);
-            if(coupon != null && coupon.isValid()){
-                return coupon;
+            ResponseEntity<CouponResponse> couponResponse =  couponClient.getCouponByCode(couponCode);
+            if( couponResponse.getBody().isValid()){
+                System.out.println(couponCode);
+                return couponResponse.getBody();
             }
             }
         return null;
     }
-
     @Override
     public void couponConsumption(CouponRequest consumeCouponRequest) {
         couponClient.consumeCoupon(consumeCouponRequest);
     }
-
-
 }

@@ -32,7 +32,6 @@ public class Product {
     private String description;
 
     private String merchantCardNumber;
-    private String merchantCardCvv;
     private int quantity;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     @JsonIgnore

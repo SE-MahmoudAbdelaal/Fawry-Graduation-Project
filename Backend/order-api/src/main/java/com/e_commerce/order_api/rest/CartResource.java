@@ -17,7 +17,6 @@ public class CartResource {
     CartService cartService;
     HeaderGenerator headerGenerator;
 
-
     @GetMapping
     public ResponseEntity<List<Object>> getCart(@RequestHeader(value = "Cookie") String cartId){
         List<Object>cart = cartService.getCart(cartId);

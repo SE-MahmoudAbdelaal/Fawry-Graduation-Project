@@ -2,10 +2,13 @@ package com.e_commerce.order_api.service.impl;
 
 import com.e_commerce.order_api.entity.Item;
 import com.e_commerce.order_api.entity.Order;
-import com.e_commerce.order_api.model.TransactionRequest;
+import com.e_commerce.order_api.model.DepositRequest;
+import com.e_commerce.order_api.model.TransactionResponse;
+import com.e_commerce.order_api.model.WithdrawRequest;
 import com.e_commerce.order_api.repository.OrderRepository;
 import com.e_commerce.order_api.service.BankService;
 import com.e_commerce.order_api.service.OrderService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,26 +24,28 @@ public class OrderServiceImpl implements OrderService {
     BankService bankService;
     private OrderRepository orderRepo;
 
+    @Transactional
     @Override
     public Order saveOrder(Order order ) {
-        TransactionRequest transactionRequestCustomer = new TransactionRequest();
-        transactionRequestCustomer.setAmount(order.getTotal_amount());
-        transactionRequestCustomer.setCardNumber(order.getCard_number());
-        transactionRequestCustomer.setCvv(order.getCvv());
-        ResponseEntity<String> withdrawResponse = bankService.withdraw(transactionRequestCustomer);
-        for (Item item : order.getItems()){
-            TransactionRequest transactionRequestMerchant = new TransactionRequest();
-            transactionRequestMerchant.setAmount( item.getProduct().getPrice());
-            transactionRequestMerchant.setCardNumber( item.getProduct().getMerchantCardNumber());
-            transactionRequestMerchant.setCvv( item.getProduct().getMerchantCardCvv());
-             bankService.deposit(transactionRequestMerchant);
-        }
-        if(withdrawResponse.getStatusCode().equals(200)){
+        WithdrawRequest withdrawRequest = new WithdrawRequest();
+        withdrawRequest.setAmount(order.getTotal_amount());
+        withdrawRequest.setCardNumber(order.getCard_number());
+        withdrawRequest.setCvv(order.getCvv());
+        ResponseEntity<TransactionResponse> withdrawResponse = bankService.withdraw(withdrawRequest);
+//        for (Item item : order.getItems()){
+            DepositRequest depositRequest = new DepositRequest();
+//            depositRequest.setAmount( item.getProduct().getPrice());
+//            depositRequest.setCardNumber( item.getProduct().getMerchantCardNumber());
+            depositRequest.setCardNumber("7676368467003835");
+            depositRequest.setAmount(50.6);
+             bankService.deposit(depositRequest);
+//        }
+//        if(withdrawResponse.getStatusCode().equals(200)){
             order.setStatus("PAID");
-            order.setTransactionId(withdrawResponse.getBody());
+            order.setTransactionId(withdrawResponse.getBody().getId());
             return orderRepo.save(order);
-        }
-        return null;
+//        }
+//        return null;
     }
 
     @Override
