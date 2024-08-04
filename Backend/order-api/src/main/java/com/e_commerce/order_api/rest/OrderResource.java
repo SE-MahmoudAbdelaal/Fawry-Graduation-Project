@@ -37,13 +37,8 @@ public class OrderResource {
     private CartService cartService;
     @Autowired
     private UserClient userClient;
-    /////test order notification
     @Autowired
     NotificationService notificationService;
-//    @PostMapping
-//    public OrderNotification placeOrder(@RequestBody Order order){
-//        return notificationService.sendOrderNotification(order);
-//    }
 
     @PostMapping(value = "{userId}", params = {"cardNumber", "cvv" ,"coupon"})
     public ResponseEntity<Order> saveOrder(@PathVariable("userId") Long userId,
@@ -69,14 +64,13 @@ public class OrderResource {
             try {
                 Order savedOrder = orderService.saveOrder(order);
                 if (savedOrder != null) {
-                    System.out.println(couponCode);
                     CouponRequest consumeOrderRequest = new CouponRequest();
                     consumeOrderRequest.setCode(couponCode);
                     consumeOrderRequest.setOrder_id(order.getId());
                     consumeOrderRequest.setCustomer_id(userId);
                     couponService.couponConsumption(consumeOrderRequest);
                     cartService.deleteCart(cartId);
-                    notificationService.sendOrderNotification(order);
+                    notificationService.sendOrderNotification(savedOrder);
 
                     return new ResponseEntity<Order>(savedOrder, headerGenerator.getHeadersForSuccessPostMethod(request, order.getId()),
                             HttpStatus.CREATED);

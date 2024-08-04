@@ -4,5 +4,5 @@ import com.e_commerce.order_api.entity.Order;
 import com.e_commerce.order_api.model.OrderNotification;
 
 public interface NotificationService {
-    public OrderNotification sendOrderNotification (Order order);
+    public void sendOrderNotification (Order order);
 }
